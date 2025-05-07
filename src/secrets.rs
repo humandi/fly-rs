@@ -1,4 +1,4 @@
-use crate::API_BASE_URL;
+use crate::{CommonError, API_BASE_URL};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -34,7 +34,7 @@ impl SecretsManager {
         Self { client, api_token }
     }
 
-    pub async fn list_secrets(&self, app_name: &str) -> Result<Vec<Secret>, Box<dyn Error>> {
+    pub async fn list_secrets(&self, app_name: &str) -> Result<Vec<Secret>, CommonError> {
         let url = format!("{API_BASE_URL}/apps/{}/secrets", app_name);
         let response = self
             .client
@@ -58,7 +58,7 @@ impl SecretsManager {
         secret_label: &str,
         secret_type: &str,
         value_request: SecretValue,
-    ) -> Result<Secret, Box<dyn Error>> {
+    ) -> Result<(), CommonError> {
         debug!("Creating secret: {}", secret_label);
         let url = format!(
             "{API_BASE_URL}/apps/{}/secrets/{}/type/{}",
@@ -74,8 +74,8 @@ impl SecretsManager {
 
         let status = response.status();
         if status.is_success() {
-            let secret = response.json::<Secret>().await?;
-            Ok(secret)
+            // let secret = response.json::<Secret>().await?;
+            Ok(())
         } else {
             let error_text = response.text().await?;
             Err(format!("Failed to create secret: {} - {}", status, error_text).into())
@@ -87,7 +87,7 @@ impl SecretsManager {
         app_name: &str,
         secret_label: &str,
         secret_type: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), CommonError> {
         debug!("Generating secret: {}", secret_label);
         let url = format!(
             "{API_BASE_URL}/apps/{}/secrets/{}/type/{}/generate",
@@ -112,7 +112,7 @@ impl SecretsManager {
         &self,
         app_name: &str,
         secret_label: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), CommonError> {
         debug!("Deleting secret: {}", secret_label);
         let url = format!("{API_BASE_URL}/apps/{}/secrets/{}", app_name, secret_label);
         let response = self

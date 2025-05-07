@@ -1,7 +1,7 @@
 use crate::machines::{
     CommandResponse, EventResponse, MachineRequest, MachineResponse, MachineState, ProcessResponse,
 };
-use crate::API_BASE_URL;
+use crate::{CommonError, API_BASE_URL};
 use reqwest::Client;
 use std::error::Error;
 use tracing::debug;
@@ -23,7 +23,7 @@ impl MachineManager {
         &self,
         app_name: &str,
         request_data: MachineRequest,
-    ) -> Result<MachineResponse, Box<dyn Error>> {
+    ) -> Result<MachineResponse, CommonError> {
         debug!("Creating machine for app: {}", app_name);
         let url = format!("{}/apps/{}/machines", API_BASE_URL, app_name);
 
@@ -43,9 +43,13 @@ impl MachineManager {
             debug!("Raw JSON response body: {}", response_text);
 
             let response_body: MachineResponse = serde_json::from_str(&response_text)?;
+            debug!("Response body: {:#?}", response_body);
             Ok(response_body)
         } else {
-            Err(format!("Request failed with status: {}", response.status()).into())
+            let status = response.status().clone();
+            let error_message = response.text().await?;
+            debug!("Error message: {}", error_message);
+            Err(format!("Request failed with status: {}", status).into())
         }
     }
 
@@ -53,7 +57,7 @@ impl MachineManager {
         &self,
         app_name: &str,
         request_data: Option<MachineListRequest>,
-    ) -> Result<Vec<MachineResponse>, Box<dyn Error>> {
+    ) -> Result<Vec<MachineResponse>, CommonError> {
         let url = format!("{}/apps/{}/machines", API_BASE_URL, app_name);
 
         let response = self
@@ -84,31 +88,35 @@ impl MachineManager {
         app_name: &str,
         machine_id: &str,
         instance_id: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), CommonError> {
         debug!("Stopping machine {}", machine_id);
         let url = format!(
             "{}/apps/{}/machines/{}/stop",
             API_BASE_URL, app_name, machine_id
         );
 
-        let response = self
+        debug!("URL: {}", url);
+
+        let response: reqwest::Response = self
             .client
             .post(&url)
             .bearer_auth(&self.api_token)
             .send()
             .await?;
 
+        debug!("Response: {:#?}", response);
+
         if response.status() == reqwest::StatusCode::OK {
             debug!("Stopped machine {}", machine_id);
 
-            self.wait_for_machine_state(
-                app_name,
-                machine_id,
-                MachineState::Stopped,
-                None,
-                Some(instance_id),
-            )
-            .await?;
+            // self.wait_for_machine_state(
+            //     app_name,
+            //     machine_id,
+            //     MachineState::Stopped,
+            //     None,
+            //     Some(instance_id),
+            // )
+            // .await?;
 
             Ok(())
         } else {
@@ -124,7 +132,7 @@ impl MachineManager {
         }
     }
 
-    pub async fn start(&self, app_name: &str, machine_id: &str) -> Result<(), Box<dyn Error>> {
+    pub async fn start(&self, app_name: &str, machine_id: &str) -> Result<(), CommonError> {
         debug!("Starting machine {}", machine_id);
         let url = format!(
             "{}/apps/{}/machines/{}/start",
@@ -162,7 +170,7 @@ impl MachineManager {
         app_name: &str,
         machine_id: &str,
         force: bool,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), CommonError> {
         debug!("Deleting machine {}", machine_id);
         let mut url = format!("{}/apps/{}/machines/{}", API_BASE_URL, app_name, machine_id);
 
@@ -203,7 +211,7 @@ impl MachineManager {
         desired_state: MachineState,
         timeout: Option<u64>,
         instance_id: Option<&str>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), CommonError> {
         debug!(
             "Waiting for machine {} to reach state: {}",
             machine_id, desired_state
@@ -247,7 +255,7 @@ impl MachineManager {
         machine_id: &str,
         #[allow(unused_variables)] instance_id: &str,
         machine_request: MachineRequest,
-    ) -> Result<MachineResponse, Box<dyn Error>> {
+    ) -> Result<MachineResponse, CommonError> {
         debug!("Updating machine {}", machine_id);
         let url = format!("{}/apps/{}/machines/{}", API_BASE_URL, app_name, machine_id);
 
@@ -285,7 +293,7 @@ impl MachineManager {
         app_name: &str,
         machine_id: &str,
         instance_id: &str,
-    ) -> Result<MachineResponse, Box<dyn Error>> {
+    ) -> Result<MachineResponse, CommonError> {
         debug!("Restarting machine {}", machine_id);
         let url = format!(
             "{}/apps/{}/machines/{}/restart",
@@ -324,7 +332,7 @@ impl MachineManager {
         &self,
         app_name: &str,
         machine_id: &str,
-    ) -> Result<Vec<EventResponse>, Box<dyn Error>> {
+    ) -> Result<Vec<EventResponse>, CommonError> {
         let url = format!(
             "{}/apps/{}/machines/{}/events",
             API_BASE_URL, app_name, machine_id
@@ -352,7 +360,7 @@ impl MachineManager {
         &self,
         app_name: &str,
         machine_id: &str,
-    ) -> Result<Vec<ProcessResponse>, Box<dyn Error>> {
+    ) -> Result<Vec<ProcessResponse>, CommonError> {
         let url = format!(
             "{}/apps/{}/machines/{}/ps",
             API_BASE_URL, app_name, machine_id
@@ -382,7 +390,7 @@ impl MachineManager {
         machine_id: &str,
         command: Vec<&str>,
         timeout: Option<u64>,
-    ) -> Result<CommandResponse, Box<dyn Error>> {
+    ) -> Result<CommandResponse, CommonError> {
         debug!(
             "Executing command on machine {} with command: {:?}",
             machine_id, command
@@ -422,7 +430,7 @@ impl MachineManager {
         &self,
         app_name: &str,
         machine_id: &str,
-    ) -> Result<MachineResponse, Box<dyn Error>> {
+    ) -> Result<MachineResponse, CommonError> {
         debug!("Fetching details for machine {}", machine_id);
         let url = format!("{}/apps/{}/machines/{}", API_BASE_URL, app_name, machine_id);
 

@@ -3,7 +3,7 @@ use std::error::Error;
 use tracing_subscriber::{filter::EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     tracing_subscriber::registry()
         .with(fmt::layer().with_writer(std::io::stdout))
         .with(EnvFilter::new(

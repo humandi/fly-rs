@@ -1,4 +1,4 @@
-use crate::API_BASE_URL;
+use crate::{CommonError, API_BASE_URL};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -46,11 +46,7 @@ impl AppManager {
         Self { client, api_token }
     }
 
-    pub async fn create(
-        &self,
-        app_name: &str,
-        org_slug: &str,
-    ) -> Result<AppResponse, Box<dyn Error>> {
+    pub async fn create(&self, app_name: &str, org_slug: &str) -> Result<AppResponse, CommonError> {
         let url = format!("{}/apps", API_BASE_URL);
         let request_body = CreateAppRequest {
             app_name: app_name.to_string(),
@@ -81,7 +77,7 @@ impl AppManager {
         }
     }
 
-    pub async fn delete(&self, app_name: &str, force: bool) -> Result<(), Box<dyn Error>> {
+    pub async fn delete(&self, app_name: &str, force: bool) -> Result<(), CommonError> {
         let url = if force {
             format!("{}/apps/{}?force=true", API_BASE_URL, app_name)
         } else {
@@ -104,7 +100,7 @@ impl AppManager {
         Ok(())
     }
 
-    pub async fn list(&self, org_slug: &str) -> Result<Vec<App>, Box<dyn Error>> {
+    pub async fn list(&self, org_slug: &str) -> Result<Vec<App>, CommonError> {
         let url = format!("{}/apps?org_slug={}", API_BASE_URL, org_slug);
 
         let response = self

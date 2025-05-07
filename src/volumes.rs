@@ -1,4 +1,4 @@
-use crate::{machines::MachineRegion, API_BASE_URL};
+use crate::{machines::MachineRegion, CommonError, API_BASE_URL};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
@@ -212,7 +212,7 @@ impl VolumeManager {
         &self,
         app_name: &str,
         summary: bool,
-    ) -> Result<Vec<Volume>, Box<dyn Error>> {
+    ) -> Result<Vec<Volume>, CommonError> {
         let url = format!(
             "{API_BASE_URL}/apps/{}/volumes?summary={}",
             app_name, summary
@@ -237,7 +237,7 @@ impl VolumeManager {
         &self,
         app_name: &str,
         volume_request: CreateVolumeRequest,
-    ) -> Result<Volume, Box<dyn Error>> {
+    ) -> Result<Volume, CommonError> {
         debug!("Creating volume: {:?}", volume_request);
         let url = format!("{API_BASE_URL}/apps/{}/volumes", app_name);
 
@@ -261,11 +261,7 @@ impl VolumeManager {
         }
     }
 
-    pub async fn get_volume(
-        &self,
-        app_name: &str,
-        volume_id: &str,
-    ) -> Result<Volume, Box<dyn Error>> {
+    pub async fn get_volume(&self, app_name: &str, volume_id: &str) -> Result<Volume, CommonError> {
         let url = format!("{API_BASE_URL}/apps/{}/volumes/{}", app_name, volume_id);
         let response = self
             .client
@@ -288,7 +284,7 @@ impl VolumeManager {
         app_name: &str,
         volume_id: &str,
         update_request: UpdateVolumeRequest,
-    ) -> Result<Volume, Box<dyn Error>> {
+    ) -> Result<Volume, CommonError> {
         let url = format!("{API_BASE_URL}/apps/{}/volumes/{}", app_name, volume_id);
         let response = self
             .client
@@ -307,11 +303,7 @@ impl VolumeManager {
         }
     }
 
-    pub async fn destroy_volume(
-        &self,
-        app_name: &str,
-        volume_id: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    pub async fn destroy_volume(&self, app_name: &str, volume_id: &str) -> Result<(), CommonError> {
         let url = format!("{API_BASE_URL}/apps/{}/volumes/{}", app_name, volume_id);
         let response = self
             .client
@@ -333,7 +325,7 @@ impl VolumeManager {
         app_name: &str,
         volume_id: &str,
         extend_request: ExtendVolumeRequest,
-    ) -> Result<Volume, Box<dyn Error>> {
+    ) -> Result<Volume, CommonError> {
         let url = format!(
             "{API_BASE_URL}/apps/{}/volumes/{}/extend",
             app_name, volume_id
@@ -359,7 +351,7 @@ impl VolumeManager {
         &self,
         app_name: &str,
         volume_id: &str,
-    ) -> Result<Vec<Snapshot>, Box<dyn Error>> {
+    ) -> Result<Vec<Snapshot>, CommonError> {
         let url = format!(
             "{API_BASE_URL}/apps/{}/volumes/{}/snapshots",
             app_name, volume_id
@@ -384,7 +376,7 @@ impl VolumeManager {
         &self,
         app_name: &str,
         volume_id: &str,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<(), CommonError> {
         let url = format!(
             "{API_BASE_URL}/apps/{}/volumes/{}/snapshots",
             app_name, volume_id

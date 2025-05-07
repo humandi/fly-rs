@@ -55,6 +55,8 @@ use reqwest::Client;
 
 const API_BASE_URL: &str = "https://api.machines.dev/v1";
 
+pub type CommonError = Box<dyn std::error::Error + Send + Sync + 'static>;
+
 #[derive(Clone, Debug)]
 pub struct FlyControl {
     #[cfg(feature = "apps")]
