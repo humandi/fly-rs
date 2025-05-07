@@ -74,7 +74,7 @@ impl SecretsManager {
 
         let status = response.status();
         if status.is_success() {
-            // let secret = response.json::<Secret>().await?;
+            let secret = response.json::<Secret>().await?;
             Ok(())
         } else {
             let error_text = response.text().await?;

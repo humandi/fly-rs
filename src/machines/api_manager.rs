@@ -43,13 +43,9 @@ impl MachineManager {
             debug!("Raw JSON response body: {}", response_text);
 
             let response_body: MachineResponse = serde_json::from_str(&response_text)?;
-            debug!("Response body: {:#?}", response_body);
             Ok(response_body)
         } else {
-            let status = response.status().clone();
-            let error_message = response.text().await?;
-            debug!("Error message: {}", error_message);
-            Err(format!("Request failed with status: {}", status).into())
+            Err(format!("Request failed with status: {}", response.status()).into())
         }
     }
 
@@ -95,20 +91,17 @@ impl MachineManager {
             API_BASE_URL, app_name, machine_id
         );
 
-        debug!("URL: {}", url);
-
-        let response: reqwest::Response = self
+        let response = self
             .client
             .post(&url)
             .bearer_auth(&self.api_token)
             .send()
             .await?;
 
-        debug!("Response: {:#?}", response);
 
         if response.status() == reqwest::StatusCode::OK {
             debug!("Stopped machine {}", machine_id);
-
+            // TODO: Wait for machine to be stopped, this code doesn't work as expected.
             // self.wait_for_machine_state(
             //     app_name,
             //     machine_id,

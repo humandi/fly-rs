@@ -1,9 +1,8 @@
-use fly_sdk::{secrets, FlyControl};
-use std::error::Error;
+use fly_sdk::{secrets, CommonError, FlyControl};
 use tracing_subscriber::{filter::EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
+async fn main() -> Result<(), CommonError> {
     tracing_subscriber::registry()
         .with(fmt::layer().with_writer(std::io::stdout))
         .with(EnvFilter::new(
